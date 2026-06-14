@@ -2,13 +2,5 @@
   "name": "xiao-shizi-helper",
   "version": "2.0.0",
   "description": "小狮子助手 - 企业知识库问答工具（飞书多维表格云端版）",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "node-fetch": "^3.3.2",
-    "cors": "^2.8.5"
-  }
+  "private": true
 }
