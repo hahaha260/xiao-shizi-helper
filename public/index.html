@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>小狮子助手</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue-900: #0a1628;
+      --blue-800: #0f2040;
+      --blue-700: #152d54;
+      --blue-600: #1a3f70;
+      --blue-500: #0052cc;
+      --blue-400: #3b82f6;
+      --blue-300: #60a5fa;
+      --blue-200: #bfdbfe;
+      --blue-100: #dbeafe;
+      --blue-50: #eff6ff;
+      --text-main: #1e293b;
+      --text-sub: #475569;
+      --text-hint: #94a3b8;
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --border-hover: #cbd5e1;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-text-size-adjust: 100%;
+      overscroll-behavior: none;
+    }
+    html { overscroll-behavior: none; }
+
+    /* NAV */
+    .navbar {
+      background: var(--blue-800);
+      height: 48px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      color: #fff;
+      letter-spacing: 0.5px;
+    }
+    .brand-icon {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .navbar-right { margin-left: auto; }
+    .btn-admin {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius-sm);
+      padding: 5px 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.8);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .btn-admin:hover { background: rgba(255,255,255,0.2); color: #fff; }
+
+    /* Cloud Badge */
+    .cloud-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.08);
+      margin-right: 8px;
+      white-space: nowrap;
+      transition: all 0.3s;
+    }
+    .cloud-badge.connected {
+      color: rgba(134,239,172,0.9);
+      background: rgba(34,197,94,0.15);
+    }
+    .cloud-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #94a3b8;
+      animation: pulse-dot 2s infinite;
+    }
+    .cloud-dot.on { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+    .cloud-dot.off { background: #f59e0b; }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* PAGES */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ===== USER PAGE ===== */
+    .user-wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 56px 20px 80px;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    .user-hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .user-hero h1 {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--blue-800);
+      margin-bottom: 8px;
+      letter-spacing: -0.3px;
+    }
+    .user-hero p {
+      font-size: 14px;
+      color: var(--text-sub);
+      line-height: 1.6;
+    }
+
+    /* Search */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 6px;
+    }
+    .search-icon {
+      position: absolute;
+      left: 18px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--blue-400);
+      pointer-events: none;
+    }
+    .search-input {
+      width: 100%;
+      height: 50px;
+      border-radius: 25px;
+      border: 1.5px solid var(--border);
+      padding: 0 48px 0 48px;
+      font-size: 16px;
+      color: var(--text-main);
+      background: var(--surface);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+      box-shadow: var(--shadow-sm);
+    }
+    .search-input::placeholder { color: var(--text-hint); }
+    .search-input:focus {
+      border-color: var(--blue-500);
+      box-shadow: 0 0 0 3px rgba(0,82,204,0.08), var(--shadow-md);
+    }
+    .search-clear {
+      position: absolute;
+      right: 16px; top: 50%;
+      transform: translateY(-50%);
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--blue-200);
+      border: none;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: var(--blue-700);
+      font-size: 12px;
+      line-height: 1;
+      transition: background 0.15s;
+    }
+    .search-clear:hover { background: var(--blue-300); }
+    .search-clear.visible { display: flex; }
+
+    /* Results area */
+    .results-header {
+      font-size: 13px;
+      color: var(--text-sub);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .results-header strong { color: var(--blue-700); font-weight: 600; }
+
+    /* QA answer cards */
+    .qa-list { display: grid; gap: 12px; }
+    .qa-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .qa-card:hover { border-color: var(--blue-200); box-shadow: var(--shadow-md); }
+    .qa-card.open {
+      border-color: var(--blue-300);
+      box-shadow: 0 2px 12px rgba(0,82,204,0.08);
+    }
+    .qa-card.open .qa-q {
+      border-left: 3px solid var(--blue-500);
+      margin-left: -1px;
+      padding-left: 15px;
+    }
+    .qa-q {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 18px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .qa-q:hover { background: var(--blue-50); }
+    .qa-q-badge {
+      flex-shrink: 0;
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      background: var(--blue-50);
+      color: var(--blue-500);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px;
+    }
+    .qa-card.open .qa-q-badge {
+      background: var(--blue-500);
+      color: #fff;
+    }
+    .qa-q-text {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-main);
+      line-height: 1.5;
+    }
+    .qa-toggle-icon {
+      flex-shrink: 0;
+      color: var(--blue-300);
+      font-size: 18px;
+      line-height: 1;
+      margin-top: 2px;
+      transition: transform 0.25s, color 0.2s;
+    }
+    .qa-card.open .qa-toggle-icon { transform: rotate(45deg); color: var(--blue-500); }
+    .qa-a {
+      display: none;
+      border-top: 1px solid var(--border);
+      background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+    }
+    .qa-card.open .qa-a { display: block; }
+    .qa-a-inner {
+      padding: 16px 18px 18px 54px;
+    }
+    .qa-cat-badge {
+      display: inline-block;
+      background: var(--blue-100);
+      color: var(--blue-600);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    .qa-a-text {
+      font-size: 13.5px;
+      color: var(--text-sub);
+      line-height: 1.85;
+      white-space: pre-line;
+    }
+    .empty-tip {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--text-hint);
+      font-size: 13px;
+    }
+    mark { background: #fef08a; color: var(--text-main); border-radius: 2px; padding: 1px 3px; }
+
+    /* ===== ADMIN PAGE ===== */
+    .admin-layout {
+      display: flex;
+      min-height: calc(100vh - 48px);
+    }
+    .admin-sidebar {
+      width: 180px;
+      background: var(--blue-900);
+      padding: 16px 0;
+      flex-shrink: 0;
+    }
+    .admin-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 20px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.65);
+      cursor: pointer;
+      transition: all 0.15s;
+      border-radius: 0 20px 20px 0;
+      margin-right: 8px;
+    }
+    .admin-nav-item:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.05); }
+    .admin-nav-item.active { color: #fff; background: var(--blue-700); font-weight: 600; }
+    .admin-main { flex: 1; padding: 24px 28px; overflow: auto; background: var(--bg); }
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; }
+    .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
+    .admin-title { font-size: 17px; font-weight: 700; color: var(--blue-800); letter-spacing: -0.2px; }
+
+    .btn-primary {
+      background: var(--blue-500); color: white; border: none;
+      padding: 8px 18px; border-radius: 8px; font-size: 13px;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s;
+      font-family: inherit; font-weight: 500; box-shadow: 0 1px 3px rgba(0,82,204,0.2);
+    }
+    .btn-primary:hover { background: var(--blue-600); }
+    .btn-secondary {
+      background: var(--surface); color: var(--text-sub);
+      border: 1.5px solid var(--border); padding: 8px 18px;
+      border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.15s;
+      font-family: inherit; font-weight: 500;
+    }
+    .btn-secondary:hover { border-color: var(--blue-400); color: var(--blue-500); }
+    .btn-danger {
+      background: none; color: #dc2626;
+      border: 1px solid rgba(220,38,38,0.25); padding: 4px 10px;
+      border-radius: var(--radius-sm); font-size: 12px; cursor: pointer; transition: all 0.15s;
+      font-family: inherit;
+    }
+    .btn-danger:hover { background: #fef2f2; }
+
+    /* Admin table */
+    .admin-table-wrap {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .admin-table-wrap table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .admin-table-wrap thead {
+      background: var(--blue-50);
+    }
+    .admin-table-wrap th {
+      padding: 10px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--blue-700);
+      border-bottom: 1.5px solid var(--border);
+      white-space: nowrap;
+    }
+    .admin-table-wrap td {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-main);
+      vertical-align: middle;
+    }
+    .admin-table-wrap tbody tr:hover { background: var(--blue-50); }
+    .admin-table-wrap tbody tr:last-child td { border-bottom: none; }
+    .admin-search-row {
+      display: flex;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .admin-search-input {
+      flex: 1;
+      height: 34px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+      color: var(--text-main);
+      background: var(--bg);
+    }
+    .admin-search-input:focus {
+      border-color: var(--blue-400);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    .admin-filter {
+      height: 34px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0 10px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+      color: var(--text-main);
+      background: var(--bg);
+      min-width: 120px;
+    }
+    .tag-badge {
+      display: inline-block;
+      background: var(--blue-100);
+      color: var(--blue-600);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .td-question {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+    .td-answer {
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-sub);
+      font-size: 12.5px;
+    }
+    .td-actions {
+      white-space: nowrap;
+      display: flex;
+      gap: 6px;
+    }
+    .btn-edit {
+      background: none;
+      color: var(--blue-500);
+      border: 1px solid var(--blue-200);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+      font-weight: 500;
+    }
+    .btn-edit:hover { background: var(--blue-50); border-color: var(--blue-400); }
+
+    /* Login */
+    .login-wrap {
+      min-height: calc(100vh - 48px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background: var(--bg);
+    }
+    .login-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      width: 100%;
+      max-width: 360px;
+      box-shadow: var(--shadow-md);
+    }
+    .login-logo {
+      width: 48px; height: 48px;
+      border-radius: 12px;
+      background: var(--blue-50);
+      color: var(--blue-500);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+    }
+
+    /* Forms */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+    .form-label span { color: #dc2626; }
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text-main);
+      background: var(--surface);
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      border-color: var(--blue-400);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+    .form-select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 32px;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10,22,40,0.5);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+    }
+    .modal-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--blue-800);
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      color: var(--text-hint);
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .modal-close:hover { background: var(--bg); color: var(--text-sub); }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--blue-800);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      z-index: 300;
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Stats */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-hint);
+      margin-bottom: 6px;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--blue-700);
+      line-height: 1;
+    }
+
+    /* Category management */
+    .cat-manage-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .cat-manage-card {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+      border: 1.5px solid var(--border);
+    }
+    .cat-manage-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+    .cat-manage-count {
+      font-size: 12px;
+      color: var(--text-hint);
+    }
+    .cat-manage-actions {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+    .btn-icon:hover { border-color: var(--blue-400); color: var(--blue-500); background: var(--blue-50); }
+    .btn-icon.danger:hover { border-color: #fca5a5; color: #dc2626; background: #fef2f2; }
+
+    /* Drag sort */
+    .drag-handle {
+      cursor: grab;
+      color: var(--blue-300);
+      font-size: 14px;
+      user-select: none;
+    }
+    .drag-handle:active { cursor: grabbing; }
+    tr.dragging { opacity: 0.5; background: var(--blue-50); }
+    tr.drag-over { border-top: 2px solid var(--blue-500); }
+
+    @media (max-width: 480px) {
+      .admin-sidebar { display: none; }
+      .admin-main { padding: 16px; }
+      .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .stat-card { padding: 14px; }
+      .stat-value { font-size: 22px; }
+      .user-wrap { padding: 32px 16px 60px; }
+      .user-hero h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="navbar">
+  <div class="navbar-brand">
+    <img src="logo_icon.png" class="brand-icon" alt="小狮子" />
+    小狮子助手
+  </div>
+  <div class="navbar-right">
+    <div class="cloud-badge" id="cloudBadge"><span class="cloud-dot off"></span>连接中...</div>
+    <button class="btn-admin" id="navAdminBtn" onclick="switchToAdmin()">管理入口</button>
+    <button class="btn-admin" id="navBackBtn" onclick="switchToUser()" style="display:none">返回用户端</button>
+  </div>
+</nav>
+
+<!-- ===== USER PAGE ===== -->
+<div class="page active" id="userPage">
+  <div class="user-wrap">
+    <div class="user-hero">
+      <h1>你好，有什么可以帮你的？</h1>
+      <p>输入关键词，即时获取公司制度和业务流程解答</p>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      </span>
+      <input class="search-input" id="userSearchInput" type="text" placeholder="请输入关键词，例如：报销、请假..." autocomplete="off" />
+      <button class="search-clear" id="searchClearBtn" onclick="clearSearch()">×</button>
+    </div>
+    <div id="resultsArea" style="display:none">
+      <div class="results-header" id="resultsHeader"></div>
+      <div class="qa-list" id="qaList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADMIN PAGE ===== -->
+<div class="page" id="adminPage">
+  <!-- Login -->
+  <div id="adminLogin" class="login-wrap">
+    <div class="login-card">
+      <div style="text-align:center;margin-bottom:24px">
+        <div class="login-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <p style="font-size:16px;font-weight:600;color:var(--blue-800)">管理员登录</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">密码</label>
+        <input class="form-input" id="loginPass" type="password" placeholder="请输入密码" />
+      </div>
+      <div id="loginErr" style="color:#dc2626;font-size:12px;margin-bottom:10px;display:none">密码错误</div>
+      <button class="btn-primary" style="width:100%;justify-content:center;padding:10px" onclick="doLogin()">登录</button>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="adminDashboard" style="display:none">
+    <div class="admin-layout">
+      <aside class="admin-sidebar">
+        <div class="admin-nav-item active" onclick="showAdminPanel('dashboard',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          概览
+        </div>
+        <div class="admin-nav-item" onclick="showAdminPanel('qaManage',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          词条管理
+        </div>
+        <div class="admin-nav-item" onclick="showAdminPanel('catManage',this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          分类管理
+        </div>
+        <div style="height:1px;background:rgba(255,255,255,0.1);margin:12px 16px"></div>
+        <div class="admin-nav-item" onclick="doLogout()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          退出
+        </div>
+      </aside>
+
+      <main class="admin-main">
+        <!-- 概览 -->
+        <div class="admin-panel active" id="panel-dashboard">
+          <div class="admin-header">
+            <span class="admin-title">概览</span>
+          </div>
+          <div class="stats-row" id="statsRow"></div>
+          <div class="admin-table-wrap">
+            <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--blue-700)">最近添加的词条</div>
+            <table><thead><tr><th>问题</th><th>分类</th><th>添加时间</th></tr></thead><tbody id="recentQaTable"></tbody></table>
+          </div>
+        </div>
+
+        <!-- 词条管理 -->
+        <div class="admin-panel" id="panel-qaManage">
+          <div class="admin-header">
+            <span class="admin-title">词条管理</span>
+            <button class="btn-primary" onclick="openAddModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              新增词条
+            </button>
+          </div>
+          <div class="admin-table-wrap">
+            <div class="admin-search-row">
+              <input class="admin-search-input" id="adminSearchInput" type="text" placeholder="搜索词条..." oninput="renderAdminTable()" />
+              <select class="admin-filter" id="adminCatFilter" onchange="renderAdminTable()"><option value="">全部分类</option></select>
+            </div>
+            <table>
+              <thead><tr><th style="width:28px"></th><th style="width:30%">问题</th><th style="width:34%">解答摘要</th><th>分类</th><th>操作</th></tr></thead>
+              <tbody id="adminQaTable"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 分类管理 -->
+        <div class="admin-panel" id="panel-catManage">
+          <div class="admin-header">
+            <span class="admin-title">分类管理</span>
+            <button class="btn-primary" onclick="openAddCatModal()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              新增分类
+            </button>
+          </div>
+          <div class="cat-manage-grid" id="catManageGrid"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- QA Modal -->
+<div class="modal-overlay" id="qaModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="qaModalTitle">新增词条</span>
+      <button class="modal-close" onclick="closeQaModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">问题 <span>*</span></label>
+        <input class="form-input" id="fQuestion" type="text" placeholder="请输入员工常见问题" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">解答 <span>*</span></label>
+        <textarea class="form-textarea" id="fAnswer" placeholder="请输入详细解答内容..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">所属分类 <span>*</span></label>
+        <select class="form-select" id="fCategory"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">关键词标签 <span style="color:var(--text-hint);font-weight:400">（逗号分隔）</span></label>
+        <input class="form-input" id="fTags" type="text" placeholder="例如：年假，休假，假期" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeQaModal()">取消</button>
+      <button class="btn-primary" onclick="saveQa()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cat Modal -->
+<div class="modal-overlay" id="catModal">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-title">
+      <span id="catModalTitle">新增分类</span>
+      <button class="modal-close" onclick="closeCatModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">分类名称 <span>*</span></label>
+        <input class="form-input" id="fCatName" type="text" placeholder="例如：人事制度、财务报销..." />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeCatModal()">取消</button>
+      <button class="btn-primary" onclick="saveCat()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importData(this)" />
+
+<script>
+// ===== CONFIG =====
+const USE_API = true;
+// API 地址：本地运行时留空（由 server.js 代理）；部署到云服务器时填入完整URL，如 'https://your-api.example.com'
+const API_BASE = '';
+
+// ===== 云端状态 =====
+let cloudStatus = { connected: false, lastSync: null };
+function updateCloudStatus(connected) {
+  cloudStatus.connected = connected;
+  cloudStatus.lastSync = new Date();
+  const el = document.getElementById('cloudBadge');
+  if (!el) return;
+  if (connected) {
+    el.innerHTML = '<span class="cloud-dot on"></span>云端已连接';
+    el.className = 'cloud-badge connected';
+  } else {
+    el.innerHTML = '<span class="cloud-dot off"></span>本地模式';
+    el.className = 'cloud-badge';
+  }
+}
+
+// ===== API =====
+function apiUrl(path) { return (API_BASE || '') + path; }
+async function apiGet(path) {
+  const r = await fetch(apiUrl(path));
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function apiPost(path, body) {
+  const r = await fetch(apiUrl(path), { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function apiPut(path, body) {
+  const r = await fetch(apiUrl(path), { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+async function apiDelete(path) {
+  const r = await fetch(apiUrl(path), { method:'DELETE' });
+  if (!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+// ===== STATE =====
+let store = {
+  qaItems: [],
+  categories: ['人事制度','财务报销','行政事务','IT支持','职业发展','其他'],
+  adminPass: 'admin123'
+};
+
+// ===== DATA =====
+async function loadStore() {
+  if (USE_API) {
+    try {
+      store = await apiGet('/api/store');
+      updateCloudStatus(true);
+      return;
+    } catch (e) {
+      console.warn('API load failed, falling back to localStorage', e);
+      updateCloudStatus(false);
+    }
+  }
+  // localStorage fallback
+  const raw = localStorage.getItem('qaStore');
+  if (raw) {
+    try { store = JSON.parse(raw); } catch(e) {}
+  }
+}
+
+async function saveStore(d) {
+  if (USE_API) {
+    try {
+      await apiPost('/api/save-store', d);
+      store = d;
+      updateCloudStatus(true);
+      return;
+    } catch (e) {
+      console.warn('API save failed, falling back to localStorage', e);
+      updateCloudStatus(false);
+    }
+  }
+  store = d;
+  localStorage.setItem('qaStore', JSON.stringify(d));
+}
+
+// ===== UTILS =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function highlight(text, keywords) {
+  if (!keywords || keywords.length === 0) return esc(text);
+  const kws = Array.isArray(keywords) ? keywords : [keywords];
+  kws.sort((a, b) => b.length - a.length);
+  let result = esc(text);
+  for (const kw of kws) {
+    let escaped = '';
+    for (let i = 0; i < kw.length; i++) {
+      if ('[.*+?^${}()|\\\\'.indexOf(kw[i]) >= 0) escaped += '\\\\';
+      escaped += kw[i];
+    }
+    const re = new RegExp('(' + escaped + ')', 'gi');
+    result = result.replace(re, '<mark>$1</mark>');
+  }
+  return result;
+}
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ===== PAGE SWITCH =====
+function switchToAdmin() {
+  document.getElementById('userPage').classList.remove('active');
+  document.getElementById('adminPage').classList.add('active');
+  document.getElementById('navAdminBtn').style.display = 'none';
+  document.getElementById('navBackBtn').style.display = '';
+}
+async function switchToUser() {
+  document.getElementById('adminPage').classList.remove('active');
+  document.getElementById('userPage').classList.add('active');
+  document.getElementById('navAdminBtn').style.display = '';
+  document.getElementById('navBackBtn').style.display = 'none';
+  await loadStore();
+  updateSearchState();
+}
+
+// ===== USER PAGE =====
+let activeCat = '';
+
+function filterByCat(cat) {
+  if (activeCat === cat) {
+    activeCat = '';
+  } else {
+    activeCat = cat;
+    document.getElementById('userSearchInput').value = '';
+    document.getElementById('searchClearBtn').classList.remove('visible');
+  }
+  updateSearchState();
+}
+
+function clearSearch() {
+  document.getElementById('userSearchInput').value = '';
+  document.getElementById('searchClearBtn').classList.remove('visible');
+  activeCat = '';
+  updateSearchState();
+}
+
+function updateSearchState() {
+  const kw = document.getElementById('userSearchInput').value.trim();
+  const resultsArea = document.getElementById('resultsArea');
+  document.getElementById('searchClearBtn').classList.toggle('visible', kw.length > 0);
+  if (!kw && !activeCat) {
+    resultsArea.style.display = 'none';
+  } else {
+    resultsArea.style.display = '';
+    renderResults(kw, activeCat);
+  }
+}
+
+const STOP_WORDS = new Set(['的','了','吗','呢','吧','啊','哦','我','你','他','她','它','是','在','有','这','那','什么','怎么','如何','哪些','多少','几个','可以','需要','能','会','请问','想','想知道','帮','告诉','查一下','一下','一个','还有']);
+function extractKeywords(input) {
+  const s = input.trim().toLowerCase();
+  const byPunct = s.split(/[\s，。？！、,.?! ]+/).filter(w => w.length >= 2 && !STOP_WORDS.has(w));
+  const sliding = [];
+  for (let len = 2; len <= 4; len++) {
+    for (let i = 0; i <= s.length - len; i++) {
+      const seg = s.slice(i, i + len);
+      if (/[\u4e00-\u9fa5]/.test(seg) && !STOP_WORDS.has(seg)) sliding.push(seg);
+    }
+  }
+  return [...new Set([...byPunct, ...sliding])];
+}
+
+function itemMatchesKeywords(item, keywords) {
+  const searchIn = item.question.toLowerCase();
+  return keywords.some(kw => searchIn.includes(kw));
+}
+
+function renderResults(kw, cat) {
+  const kwLow = kw.toLowerCase().trim();
+  let items = store.qaItems;
+  if (cat) items = items.filter(i => i.category === cat);
+  let highlightKws = [];
+  if (kwLow) {
+    const keywords = extractKeywords(kwLow);
+    if (keywords.length > 0) {
+      items = items.filter(i => itemMatchesKeywords(i, keywords));
+      highlightKws = keywords;
+    } else {
+      items = items.filter(i =>
+        i.question.toLowerCase().includes(kwLow) ||
+        i.answer.toLowerCase().includes(kwLow) ||
+        (i.tags||[]).some(t => t.toLowerCase().includes(kwLow))
+      );
+      highlightKws = [kwLow];
+    }
+  }
+  const header = document.getElementById('resultsHeader');
+  if (kw && cat) {
+    header.innerHTML = '在 <strong>' + esc(cat) + '</strong> 中搜索 "<strong>' + esc(kw) + '</strong>"，共 <strong>' + items.length + '</strong> 条结果';
+  } else if (kw) {
+    header.innerHTML = '搜索 "<strong>' + esc(kw) + '</strong>"，共 <strong>' + items.length + '</strong> 条结果';
+  } else {
+    header.innerHTML = '<strong>' + esc(cat) + '</strong> — 共 <strong>' + items.length + '</strong> 条';
+  }
+  const list = document.getElementById('qaList');
+  if (items.length === 0) {
+    list.innerHTML = '<div class="empty-tip">未找到相关解答，请尝试其他关键词</div>';
+    return;
+  }
+  const autoExpand = !!kwLow;
+  list.innerHTML = items.map(item => {
+    return '<div class="qa-card ' + (autoExpand ? 'open' : '') + '" id="qac-' + item.id + '">' +
+      '<div class="qa-q" onclick="toggleCard(' + item.id + ')">' +
+        '<div class="qa-q-badge">Q</div>' +
+        '<div class="qa-q-text">' + highlight(item.question, highlightKws) + '</div>' +
+        '<div class="qa-toggle-icon">+</div>' +
+      '</div>' +
+      '<div class="qa-a">' +
+        '<div class="qa-a-inner">' +
+          '<div class="qa-cat-badge">' + esc(item.category) + '</div>' +
+          '<div class="qa-a-text">' + esc(item.answer) + '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleCard(id) {
+  document.getElementById('qac-' + id).classList.toggle('open');
+}
+
+// Live search
+document.getElementById('userSearchInput').addEventListener('input', () => {
+  activeCat = '';
+  updateSearchState();
+});
+
+// ===== ADMIN AUTH =====
+async function doLogin() {
+  const p = document.getElementById('loginPass').value;
+  if (USE_API) {
+    try {
+      const r = await apiPost('/api/login', { password: p });
+      if (r.ok) {
+        await loadStore();
+        document.getElementById('adminLogin').style.display = 'none';
+        document.getElementById('adminDashboard').style.display = 'block';
+        showAdminPanel('dashboard', document.querySelector('.admin-nav-item'));
+        return;
+      }
+    } catch (e) {}
+  }
+  // localStorage fallback
+  if (p === (store.adminPass || 'admin123')) {
+    document.getElementById('adminLogin').style.display = 'none';
+    document.getElementById('adminDashboard').style.display = 'block';
+    showAdminPanel('dashboard', document.querySelector('.admin-nav-item'));
+  } else {
+    document.getElementById('loginErr').style.display = 'block';
+  }
+}
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function doLogout() {
+  document.getElementById('adminLogin').style.display = '';
+  document.getElementById('adminDashboard').style.display = 'none';
+  document.getElementById('loginPass').value = '';
+  switchToUser();
+}
+
+// ===== ADMIN PANELS =====
+function showAdminPanel(name, el) {
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  el.classList.add('active');
+  if (name === 'dashboard') renderAdminDashboard();
+  if (name === 'qaManage') { renderAdminTable(); populateCatFilter(); }
+  if (name === 'catManage') renderCatManage();
+}
+
+function renderAdminDashboard() {
+  const total = store.qaItems.length;
+  const cats = store.categories.length;
+  const r7 = store.qaItems.filter(i => i.created > Date.now() - 7*24*3600*1000).length;
+  document.getElementById('statsRow').innerHTML =
+    '<div class="stat-card"><div class="stat-label">词条总数</div><div class="stat-value">' + total + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">分类数量</div><div class="stat-value">' + cats + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">近7天新增</div><div class="stat-value">' + r7 + '</div></div>';
+  const sorted = [...store.qaItems].sort((a,b) => b.created - a.created).slice(0,5);
+  document.getElementById('recentQaTable').innerHTML = sorted.map(i =>
+    '<tr><td class="td-question">' + esc(i.question) + '</td><td><span class="tag-badge">' + esc(i.category) + '</span></td><td style="color:var(--text-hint)">' + fmtDate(i.created) + '</td></tr>'
+  ).join('');
+}
+
+function renderAdminTable() {
+  const kw = (document.getElementById('adminSearchInput')?.value || '').toLowerCase();
+  const cat = document.getElementById('adminCatFilter')?.value || '';
+  let items = store.qaItems;
+  if (kw) items = items.filter(i => i.question.toLowerCase().includes(kw) || i.answer.toLowerCase().includes(kw));
+  if (cat) items = items.filter(i => i.category === cat);
+  const tbody = document.getElementById('adminQaTable');
+  if (items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-hint);padding:24px">暂无词条</td></tr>';
+    return;
+  }
+  tbody.innerHTML = items.map(item => {
+    const answerPreview = item.answer.length > 55 ? item.answer.slice(0,55) + '…' : item.answer;
+    return '<tr draggable="true" data-id="' + item.id + '">' +
+      '<td><span class="drag-handle" title="拖拽排序">&#x2605;</span></td>' +
+      '<td class="td-question">' + esc(item.question) + '</td>' +
+      '<td class="td-answer" title="' + esc(item.answer) + '">' + esc(answerPreview) + '</td>' +
+      '<td><span class="tag-badge">' + esc(item.category) + '</span></td>' +
+      '<td class="td-actions"><button class="btn-edit" onclick="openEditModal(' + item.id + ')">编辑</button><button class="btn-danger" onclick="deleteQa(event, ' + item.id + ')">删除</button></td>' +
+    '</tr>';
+  }).join('');
+  initDragSort(tbody);
+}
+
+function populateCatFilter() {
+  const sel = document.getElementById('adminCatFilter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">全部分类</option>' + store.categories.map(c =>
+    '<option value="' + esc(c) + '"' + (c === cur ? ' selected' : '') + '>' + esc(c) + '</option>'
+  ).join('');
+}
+
+function initDragSort(tbody) {
+  let dragRow = null;
+  tbody.querySelectorAll('tr[draggable]').forEach(row => {
+    row.addEventListener('dragstart', e => {
+      dragRow = row;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+      dragRow = null;
+    });
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (row !== dragRow) row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', () => row.classList.remove('drag-over'));
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      row.classList.remove('drag-over');
+      if (!dragRow || row === dragRow) return;
+      const fromId = Number(dragRow.dataset.id);
+      const toId = Number(row.dataset.id);
+      const fromIdx = store.qaItems.findIndex(i => i.id === fromId);
+      const toIdx = store.qaItems.findIndex(i => i.id === toId);
+      if (fromIdx < 0 || toIdx < 0) return;
+      const [moved] = store.qaItems.splice(fromIdx, 1);
+      store.qaItems.splice(toIdx, 0, moved);
+      saveStore(store).then(() => {
+        renderAdminTable();
+        showToast('排序已更新');
+      });
+    });
+  });
+}
+
+// ===== QA MODAL =====
+let editingId = null;
+
+function openAddModal() {
+  editingId = null;
+  document.getElementById('qaModalTitle').textContent = '新增词条';
+  document.getElementById('fQuestion').value = '';
+  document.getElementById('fAnswer').value = '';
+  document.getElementById('fTags').value = '';
+  populateCategorySelect();
+  document.getElementById('qaModal').classList.add('open');
+}
+function openEditModal(id) {
+  editingId = id;
+  const item = store.qaItems.find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('qaModalTitle').textContent = '编辑词条';
+  document.getElementById('fQuestion').value = item.question;
+  document.getElementById('fAnswer').value = item.answer;
+  document.getElementById('fTags').value = (item.tags || []).join('，');
+  populateCategorySelect(item.category);
+  document.getElementById('qaModal').classList.add('open');
+}
+function closeQaModal() {
+  document.getElementById('qaModal').classList.remove('open');
+}
+function populateCategorySelect(sel) {
+  const select = document.getElementById('fCategory');
+  select.innerHTML = store.categories.map(c =>
+    '<option value="' + esc(c) + '"' + (c === sel ? ' selected' : '') + '>' + esc(c) + '</option>'
+  ).join('');
+}
+async function saveQa() {
+  const q = document.getElementById('fQuestion').value.trim();
+  const a = document.getElementById('fAnswer').value.trim();
+  const cat = document.getElementById('fCategory').value;
+  const tags = document.getElementById('fTags').value.split(/[，,]/).map(t => t.trim()).filter(Boolean);
+  if (!q || !a || !cat) { showToast('请填写必填项'); return; }
+  if (editingId) {
+    // 编辑
+    const updated = { question: q, answer: a, category: cat, tags };
+    if (USE_API) {
+      await apiPut('/api/qa-item?id=' + editingId, updated);
+    } else {
+      const idx = store.qaItems.findIndex(i => i.id === editingId);
+      if (idx >= 0) store.qaItems[idx] = { ...store.qaItems[idx], ...updated };
+      await saveStore(store);
+    }
+    showToast('词条已更新');
+  } else {
+    // 新增
+    const newItem = { question: q, answer: a, category: cat, tags, created: Date.now() };
+    if (USE_API) {
+      const res = await apiPost('/api/qa', newItem);
+      newItem.id = res.id;
+    } else {
+      newItem.id = Date.now();
+      store.qaItems.push(newItem);
+      await saveStore(store);
+    }
+    showToast('词条已添加');
+  }
+  await loadStore();
+  closeQaModal();
+  renderAdminTable();
+  renderAdminDashboard();
+}
+async function deleteQa(event, id) {
+  const btn = event.currentTarget;
+  const row = btn.closest('tr');
+  if (!row) return;
+  if (!row.dataset.confirming) {
+    row.dataset.confirming = '1';
+    btn.textContent = '确认?';
+    btn.style.background = '#fee2e2';
+    btn.style.color = '#b91c1c';
+    btn.style.fontWeight = '600';
+    setTimeout(() => {
+      if (row.dataset.confirming) {
+        delete row.dataset.confirming;
+        btn.textContent = '删除';
+        btn.style.background = '';
+        btn.style.color = '';
+        btn.style.fontWeight = '';
+      }
+    }, 3000);
+    return;
+  }
+  delete row.dataset.confirming;
+  if (USE_API) {
+    await apiDelete('/api/qa-item?id=' + id);
+  } else {
+    store.qaItems = store.qaItems.filter(i => i.id !== id);
+    await saveStore(store);
+  }
+  await loadStore();
+  renderAdminTable();
+  renderAdminDashboard();
+  showToast('词条已删除');
+}
+
+// ===== CAT MANAGE =====
+let editingCatName = null;
+
+function renderCatManage() {
+  const grid = document.getElementById('catManageGrid');
+  if (store.categories.length === 0) {
+    grid.innerHTML = '<div style="color:var(--text-hint);font-size:13px">暂无分类</div>';
+    return;
+  }
+  grid.innerHTML = store.categories.map(c => {
+    const count = store.qaItems.filter(i => i.category === c).length;
+    return '<div class="cat-manage-card">' +
+      '<div><div class="cat-manage-name">' + esc(c) + '</div><div class="cat-manage-count">' + count + ' 条词条</div></div>' +
+      '<div class="cat-manage-actions">' +
+        '<button class="btn-icon" onclick="openEditCatModal(\'' + c.replace(/'/g, "\\'") + '\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>' +
+        '<button class="btn-icon danger" onclick="deleteCat(event, \'' + c.replace(/'/g, "\\'") + '\')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function openAddCatModal() {
+  editingCatName = null;
+  document.getElementById('catModalTitle').textContent = '新增分类';
+  document.getElementById('fCatName').value = '';
+  document.getElementById('catModal').classList.add('open');
+}
+function openEditCatModal(name) {
+  editingCatName = name;
+  document.getElementById('catModalTitle').textContent = '编辑分类';
+  document.getElementById('fCatName').value = name;
+  document.getElementById('catModal').classList.add('open');
+}
+function closeCatModal() {
+  document.getElementById('catModal').classList.remove('open');
+}
+async function saveCat() {
+  const name = document.getElementById('fCatName').value.trim();
+  if (!name) { showToast('请填写分类名称'); return; }
+  if (editingCatName) {
+    // 编辑分类名
+    if (USE_API) {
+      await apiDelete('/api/category-del?name=' + encodeURIComponent(editingCatName));
+      await apiPost('/api/categories', { name });
+      // 更新相关词条的分类名
+      for (const item of store.qaItems) {
+        if (item.category === editingCatName) {
+          await apiPut('/api/qa-item?id=' + item.id, { ...item, category: name });
+        }
+      }
+    } else {
+      const idx = store.categories.indexOf(editingCatName);
+      if (idx >= 0) {
+        store.categories[idx] = name;
+        store.qaItems.forEach(i => { if (i.category === editingCatName) i.category = name; });
+        await saveStore(store);
+      }
+    }
+    showToast('分类已更新');
+  } else {
+    if (store.categories.includes(name)) { showToast('该分类已存在'); return; }
+    if (USE_API) {
+      await apiPost('/api/categories', { name });
+    } else {
+      store.categories.push(name);
+      await saveStore(store);
+    }
+    showToast('分类已添加');
+  }
+  await loadStore();
+  closeCatModal();
+  renderCatManage();
+}
+
+let _deleteCatPending = null;
+async function deleteCat(event, name) {
+  if (_deleteCatPending !== name) {
+    _deleteCatPending = name;
+    const btn = event.currentTarget;
+    if (btn) { btn.style.background = '#fee2e2'; btn.querySelector('svg').style.color = '#b91c1c'; }
+    setTimeout(() => {
+      _deleteCatPending = null;
+      if (btn) { btn.style.background = ''; btn.querySelector('svg').style.color = ''; }
+    }, 3000);
+    return;
+  }
+  _deleteCatPending = null;
+  if (USE_API) {
+    await apiDelete('/api/category-del?name=' + encodeURIComponent(name));
+  } else {
+    store.categories = store.categories.filter(c => c !== name);
+    await saveStore(store);
+  }
+  await loadStore();
+  renderCatManage();
+  showToast('分类已删除');
+}
+
+// ===== EXPORT =====
+async function exportData() {
+  let data;
+  if (USE_API) {
+    data = await apiGet('/api/store');
+  } else {
+    data = store;
+  }
+  const json = JSON.stringify(data, null, 2);
+  const BOM = '\uFEFF';
+  const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+  if (isWechat) {
+    showExportDialog(json);
+    return;
+  }
+  const blob = new Blob([BOM + json], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '小狮子助手_数据备份_' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('数据已导出');
+}
+
+function showExportDialog(jsonContent) {
+  const overlay = document.createElement('div');
+  overlay.id = 'exportDialogOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,22,40,0.7);z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#fff;border-radius:12px;width:100%;max-width:480px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+  const header = document.createElement('div');
+  header.style.cssText = 'padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;';
+  header.innerHTML = '<span style="font-weight:600;font-size:15px;color:#0f2040;">导出数据</span>';
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = 'background:none;border:none;font-size:18px;color:#94a3b8;cursor:pointer;padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;';
+  closeBtn.onclick = () => document.body.removeChild(overlay);
+  header.appendChild(closeBtn);
+  const body = document.createElement('div');
+  body.style.cssText = 'padding:16px 20px;overflow-y:auto;flex:1;';
+  const hint = document.createElement('p');
+  hint.style.cssText = 'font-size:13px;color:#475569;margin-bottom:12px;line-height:1.6;';
+  hint.innerHTML = '当前为微信环境，请长按下方文本框复制内容，粘贴到备忘录或文件传输助手保存。<br><b>编辑后可直接导入系统。</b>';
+  body.appendChild(hint);
+  const ta = document.createElement('textarea');
+  ta.value = jsonContent;
+  ta.style.cssText = 'width:100%;height:200px;font-size:12px;font-family:monospace;border:1px solid #cbd5e1;border-radius:8px;padding:10px;resize:none;margin-bottom:12px;background:#f8fafc;';
+  ta.readOnly = true;
+  ta.onclick = function() { this.select(); };
+  body.appendChild(ta);
+  const copyBtn = document.createElement('button');
+  copyBtn.textContent = '复制内容';
+  copyBtn.style.cssText = 'width:100%;padding:10px;background:#0052cc;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;';
+  copyBtn.onclick = function() {
+    ta.select();
+    document.execCommand('copy');
+    showToast('已复制，可粘贴保存为 .json 文件');
+  };
+  body.appendChild(copyBtn);
+  box.appendChild(header);
+  box.appendChild(body);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+// ===== IMPORT =====
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      let text = e.target.result;
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      const data = JSON.parse(text);
+      if (!data.qaItems || !Array.isArray(data.qaItems)) throw new Error('格式错误');
+      if (USE_API) {
+        await apiPost('/api/save-store', {
+          qaItems: data.qaItems,
+          categories: data.categories || [],
+          adminPass: data.adminPass || store.adminPass || 'admin123'
+        });
+      } else {
+        store.qaItems = data.qaItems;
+        store.categories = data.categories || [];
+        if (data.adminPass) store.adminPass = data.adminPass;
+        await saveStore(store);
+      }
+      await loadStore();
+      renderAdminDashboard();
+      renderAdminTable();
+      renderCatManage();
+      showToast('数据已导入，共 ' + data.qaItems.length + ' 条词条');
+    } catch(err) {
+      showToast('导入失败：文件格式不正确');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ===== INIT =====
+(async function() {
+  await loadStore();
+  updateSearchState();
+  populateCatFilter();
+  // 预先填充分类下拉（新增词条弹窗用）
+  populateCategorySelect();
+})();
+</script>
+</body>
+</html>
